@@ -1,10 +1,14 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Input } from "../../ui/Input";
 import { Button } from "../../ui/Button";
 import { LockIcon } from "../../ui/Icons";
+import { authApi } from "../../../lib/api";
+import { useToastContext } from "@/components/providers/ToastProvider";
 
 interface SecurityFormValues {
   currentPassword: string;
@@ -28,15 +32,59 @@ const validationSchema = Yup.object({
 });
 
 export const SecurityPage = () => {
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+  const [userId, setUserId] = useState<string>("");
+  const toast = useToastContext();
+
   const initialValues: SecurityFormValues = {
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   };
 
-  const handleSubmit = (values: SecurityFormValues) => {
-    console.log("Security form submitted:", values);
-    // TODO: Implement API call to update password
+  useEffect(() => {
+    // Get user ID from localStorage
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserId(user.userId);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        router.push('/login');
+      }
+    } else {
+      router.push('/login');
+    }
+  }, [router]);
+
+  const handleSubmit = async (values: SecurityFormValues) => {
+    if (!userId) return;
+
+    setIsSaving(true);
+
+    try {
+      const response = await authApi.changePassword(userId, {
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+      });
+
+      if (response.success) {
+        toast.success('Password changed successfully!');
+        // Reset form
+        setTimeout(() => {
+          window.location.reload(); // Reload to clear form
+        }, 2000);
+      } else {
+        toast.error(response.message || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Change password error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -115,31 +163,23 @@ export const SecurityPage = () => {
                 error={touched.confirmPassword && errors.confirmPassword ? errors.confirmPassword : undefined}
               />
 
+              {/* Save Button - Fixed at bottom */}
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-placeholder-gray/20 p-6 -mx-6">
+                <div className="max-w-md mx-auto">
+                  <Button
+                    type="submit"
+                    variant="badge"
+                    size="lg"
+                    className="w-full"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Changing Password...' : 'Save'}
+                  </Button>
+                </div>
+              </div>
             </Form>
           )}
         </Formik>
-
-        {/* Save Button - Fixed at bottom */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-placeholder-gray/20 p-6">
-          <div className="max-w-md mx-auto">
-            <Button
-              type="submit"
-              variant="badge"
-              size="lg"
-              className="w-full"
-              onClick={() => {
-                // Trigger form submission
-                const form = document.querySelector('form');
-                if (form) {
-                  const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-                  form.dispatchEvent(submitEvent);
-                }
-              }}
-            >
-              Save
-            </Button>
-          </div>
-        </div>
 
         {/* Bottom padding to prevent content from being hidden behind fixed button */}
         <div className="h-24"></div>

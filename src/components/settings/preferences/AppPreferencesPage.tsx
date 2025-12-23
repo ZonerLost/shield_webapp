@@ -5,29 +5,17 @@ import * as Yup from "yup";
 import { Dropdown } from "../../ui/Dropdown";
 import { Button } from "../../ui/Button";
 import { TagIcon } from "@/components/ui/Icons";
+import { useToastContext } from "@/components/providers/ToastProvider";
 
 interface AppPreferencesFormValues {
-  language: string;
   notificationSettings: string;
-  textSize: string;
-  defaultExportFormat: string;
   autosaveInterval: string;
 }
 
 const validationSchema = Yup.object({
-  language: Yup.string().required("Language is required"),
   notificationSettings: Yup.string().required("Notification setting is required"),
-  textSize: Yup.string().required("Text size is required"),
-  defaultExportFormat: Yup.string().required("Export format is required"),
   autosaveInterval: Yup.string().required("Autosave interval is required"),
 });
-
-const languageOptions = [
-  { value: "english", label: "English (default)" },
-  { value: "spanish", label: "Spanish" },
-  { value: "french", label: "French" },
-  { value: "german", label: "German" },
-];
 
 const notificationOptions = [
   { value: "enable-reminders", label: "Enable reminders" },
@@ -35,39 +23,49 @@ const notificationOptions = [
   { value: "important-only", label: "Important only" },
 ];
 
-const textSizeOptions = [
-  { value: "small", label: "Small" },
-  { value: "medium", label: "Medium (for readability)" },
-  { value: "large", label: "Large" },
-  { value: "extra-large", label: "Extra Large" },
-];
-
-const exportFormatOptions = [
-  { value: "pdf", label: "PDF" },
-  { value: "docx", label: "DOCX" },
-  { value: "txt", label: "TXT" },
-];
+// Export format is now fixed to PDF only
 
 const autosaveIntervalOptions = [
-  { value: "2s", label: "2s (default)" },
-  { value: "5s", label: "5s" },
-  { value: "10s", label: "10s" },
+  { value: "45s", label: "45s (default)" },
   { value: "30s", label: "30s" },
+  { value: "60s", label: "60s" },
+  { value: "90s", label: "90s" },
   { value: "disabled", label: "Disabled" },
 ];
 
 export const AppPreferencesPage = () => {
-  const initialValues: AppPreferencesFormValues = {
-    language: "english",
+  const toast = useToastContext();
+
+  // Load preferences from localStorage if available
+  const getInitialValues = (): AppPreferencesFormValues => {
+    const saved = localStorage.getItem('appPreferences');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          notificationSettings: parsed.notificationSettings || "enable-reminders",
+          autosaveInterval: parsed.autosaveInterval || "45s",
+        };
+      } catch (e) {
+        console.error('Error parsing saved preferences:', e);
+      }
+    }
+    return {
     notificationSettings: "enable-reminders",
-    textSize: "medium",
-    defaultExportFormat: "pdf",
-    autosaveInterval: "2s",
+      autosaveInterval: "45s",
+    };
   };
+
+  const initialValues: AppPreferencesFormValues = getInitialValues();
 
   const handleSubmit = (values: AppPreferencesFormValues) => {
     console.log("App preferences submitted:", values);
-    // TODO: Implement API call to save preferences
+    // Save preferences to localStorage
+    localStorage.setItem('appPreferences', JSON.stringify({
+      notificationSettings: values.notificationSettings,
+      autosaveInterval: values.autosaveInterval,
+    }));
+    toast.success('Preferences saved successfully!');
   };
 
   return (
@@ -92,19 +90,23 @@ export const AppPreferencesPage = () => {
         >
           {({ values, errors, touched, setFieldValue }) => (
             <Form className="space-y-2 lg:space-y-8" noValidate>
-              {/* Language */}
+              {/* Language - Read Only */}
               <div>
                 <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-2">
                   Language
                 </h2>
-                <Dropdown
-                  options={languageOptions}
-                  value={values.language}
-                  onChange={(value) => setFieldValue("language", value)}
-                  placeholder="Select Language"
-                  error={touched.language && errors.language ? errors.language : undefined}
-                  icon={<TagIcon />}
-                />
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <TagIcon />
+                  </div>
+                  <input
+                    type="text"
+                    value="English (default)"
+                    readOnly
+                    className="w-full pl-10 pr-4 py-3 border-2 border-placeholder-gray rounded-lg bg-placeholder-gray/10 text-text-gray font-dm-sans cursor-not-allowed"
+                  />
+                </div>
+                
               </div>
 
               {/* Notification Settings */}
@@ -122,34 +124,23 @@ export const AppPreferencesPage = () => {
                 />
               </div>
 
-              {/* Text Size */}
-              <div>
-                <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-2">
-                  Text Size
-                </h2>
-                <Dropdown
-                  options={textSizeOptions}
-                  value={values.textSize}
-                  onChange={(value) => setFieldValue("textSize", value)}
-                  placeholder="Select Text Size"
-                  error={touched.textSize && errors.textSize ? errors.textSize : undefined}
-                  icon={<TagIcon />}
-                />
-              </div>
-
-              {/* Default Export Format */}
+              {/* Default Export Format - Read Only (PDF only) */}
               <div>
                 <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-2">
                   Default Export Format
                 </h2>
-                <Dropdown
-                  options={exportFormatOptions}
-                  value={values.defaultExportFormat}
-                  onChange={(value) => setFieldValue("defaultExportFormat", value)}
-                  placeholder="Select Export Format"
-                  error={touched.defaultExportFormat && errors.defaultExportFormat ? errors.defaultExportFormat : undefined}
-                  icon={<TagIcon />}
-                />
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <TagIcon />
+                  </div>
+                  <input
+                    type="text"
+                    value="PDF (default)"
+                    readOnly
+                    className="w-full pl-10 pr-4 py-3 border-2 border-placeholder-gray rounded-lg bg-placeholder-gray/10 text-text-gray font-dm-sans cursor-not-allowed"
+                  />
+                </div>
+                
               </div>
 
               {/* Autosave Interval */}

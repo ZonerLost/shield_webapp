@@ -1,64 +1,98 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { NotificationCard } from "./NotificationCard";
 import { NotificationsHeader } from "./NotificationsHeader";
+import { notificationsApi } from "@/lib/api";
+
+interface Notification {
+  notificationId: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  readAt?: string;
+}
 
 export const NotificationsPage = () => {
-  const handleNotificationClick = (title: string) => {
-    console.log(`Clicked on notification: ${title}`);
-    // Handle notification click - could mark as read, navigate to detail, etc.
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    setLoading(true);
+    const response = await notificationsApi.getNotifications(10);
+    if (response.success && response.data) {
+      // Limit to 10 notifications on frontend as well (defensive)
+      setNotifications(response.data.slice(0, 10));
+    }
+    setLoading(false);
   };
 
-  // Sample notification data
-  const notifications = [
-    {
-      title: "Draft Narrative Ready",
-      description: "Your notes have been expanded into a polished incident narrative. Review and edit as needed."
-    },
-    {
-      title: "Auto-Save Restored",
-      description: "We've recovered your last draft. Continue where you left off with your work."
-    },
-    {
-      title: "SMF Generated",
-      description: "Your Statement of Material Facts is ready for review and submission to court."
-    },
-    {
-      title: "Legal Guidance Available",
-      description: "An answer to your recent legislation query is now available in your dashboard."
-    },
-    {
-      title: "Export Successful",
-      description: "Your document has been securely saved and exported to your specified location."
-    },
-    {
-      title: "Clarification Needed",
-      description: "Shield AI requires more detail to answer your recent query. Please provide additional context."
-    },
-    {
-      title: "Legal Guidance Available",
-      description: "An answer to your recent legislation query is now available in your dashboard."
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read if not already read
+    if (!notification.isRead) {
+      await notificationsApi.markAsRead(notification.notificationId);
+      // Update local state
+      setNotifications(prev => 
+        prev.map(n => 
+          n.notificationId === notification.notificationId 
+            ? { ...n, isRead: true, readAt: new Date().toISOString() }
+            : n
+        )
+      );
+      // Trigger a custom event to refresh the count in Header
+      window.dispatchEvent(new CustomEvent('notificationsUpdated'));
     }
-  ];
+  };
+
+  const handleMarkAllAsRead = async () => {
+    const response = await notificationsApi.markAllAsRead();
+    if (response.success) {
+      // Update all notifications to read
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, isRead: true, readAt: new Date().toISOString() }))
+      );
+      // Trigger a custom event to refresh the count in Header
+      window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+    }
+  };
+
+  const hasUnread = notifications.some(n => !n.isRead);
 
   return (
     <div className=" px-6 bg-white">
       {/* Header */}
-      <NotificationsHeader />
+      <NotificationsHeader 
+        onMarkAllAsRead={handleMarkAllAsRead}
+        hasUnread={hasUnread}
+      />
 
       {/* Notifications List */}
       <div className="pb-8 sm:pb-12">
         <div className="max-w-2xl">
-          <div className="space-y-3 sm:space-y-4">
-            {notifications.map((notification, index) => (
-              <NotificationCard
-                key={index}
-                title={notification.title}
-                description={notification.description}
-                onClick={() => handleNotificationClick(notification.title)}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-sm text-text-gray">Loading notifications...</div>
+          ) : notifications.length === 0 ? (
+            <div className="text-sm text-text-gray">No notifications found.</div>
+          ) : (
+            <div className="space-y-3 sm:space-y-4">
+              {notifications.map((notification) => (
+                <NotificationCard
+                  key={notification.notificationId}
+                  title={notification.title}
+                  description={notification.message}
+                  isRead={notification.isRead}
+                  onClick={() => handleNotificationClick(notification)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,25 +1,69 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { NarrativeCard } from './NarrativeCard';
 import { Button } from '../ui/Button';
-import { Logo, MenuIcon, MoreDotsIcon } from '../ui/Icons';
+import { Logo, MenuIcon, MoreDotsIcon, TextIcon } from '../ui/Icons';
 import { ExportDropdown } from '../ui/ExportDropdown';
+import { narrativeApi } from '../../lib/api';
+import { useToastContext } from '@/components/providers/ToastProvider';
+
+interface NarrativeVersion {
+  id: string;
+  content: string;
+  createdAt: string;
+}
 
 export const GeneratedNarrativePage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedNarrative, setSelectedNarrative] = useState<string | null>(null);
   const [rejectedNarratives, setRejectedNarratives] = useState<string[]>([]);
   const [actedUponNarratives, setActedUponNarratives] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  // Mock narrative data - in real app, this would come from props or API
-  const narrativeA = "On 15/09/2025 at 22:35, officers with call sign Delta 23 attended 45 Murray Street, Perth WA after a report of disturbance at a licensed premises. The suspect, MICHAEL BROWN (DOB 25/11/1990), was observed involved in a physical altercation with the victim, JOHN SMITH (DOB 12/03/1989). Security staff had separated both parties. CCTV footage was obtained and one broken glass seized. The victim sustained minor facial injuries treated by paramedics. The suspect was arrested for assault.";
+  const [narratives, setNarratives] = useState<NarrativeVersion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const toast = useToastContext();
 
-  const narrativeB = "At 22:35 on 15/09/2025, officers from call sign Delta 23 attended 45 Murray Street, Perth WA in relation to a disturbance. The suspect, MICHAEL BROWN (DOB 25/11/1990), had been in a physical altercation with the victim, JOHN SMITH (DOB 12/03/1989). Security had separated them before police arrival. Exhibits included CCTV footage and a broken glass. The victim received treatment for minor facial injuries. The suspect was arrested for assault and conveyed for processing.";
+  const fetchDraft = async (id: string) => {
+    try {
+      const response = await narrativeApi.getDraft(id);
+      if (response.success && response.data) {
+        const draft = response.data;
+        if (draft.versions && draft.versions.length > 0) {
+          setNarratives(draft.versions);
+        } else {
+          toast.error('No narratives generated yet');
+        }
+      } else {
+        toast.error(response.message || 'Failed to load narrative');
+      }
+    } catch {
+      toast.error('Failed to load narrative');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Get draftId from URL or sessionStorage
+    const urlDraftId = searchParams.get('draftId');
+    const sessionDraftId = sessionStorage.getItem('currentDraftId');
+    const currentDraftId = urlDraftId || sessionDraftId;
+
+    if (currentDraftId) {
+      setDraftId(currentDraftId);
+      fetchDraft(currentDraftId);
+    } else {
+      toast.error('No draft ID found');
+      setIsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleApprove = (narrativeType: string) => {
-    console.log(`Approved ${narrativeType}`);
     setSelectedNarrative(narrativeType);
     setActedUponNarratives(prev => [...prev, narrativeType]);
   };
@@ -30,43 +74,89 @@ export const GeneratedNarrativePage = () => {
     setActedUponNarratives(prev => [...prev, narrativeType]);
   };
 
-  const handleExport = () => {
-    console.log(`Exporting ${selectedNarrative}`);
-    // Handle export logic
+  const handleExport = async () => {
+    if (!draftId || !selectedNarrative) {
+      toast.error('Please select a narrative to export');
+      return;
+    }
+
+    // Find the selected narrative version
+    const selectedNarrativeIndex = narratives.findIndex(
+      n => `Narrative ${String.fromCharCode(65 + narratives.indexOf(n))}` === selectedNarrative
+    );
+    
+    if (selectedNarrativeIndex === -1) {
+      toast.error('Selected narrative not found');
+      return;
+    }
+
+    const selectedVersion = narratives[selectedNarrativeIndex];
+    
+    try {
+      // Export as PDF
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/narrative/${draftId}/export?format=pdf&versionId=${selectedVersion.id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `narrative_${selectedVersion.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Narrative exported as PDF successfully!');
+      } else {
+        console.error('Export failed');
+        toast.error('Failed to export narrative');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export narrative');
+    }
+    handleDropdownClose();
   };
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
-    console.log('Content copied to clipboard');
-    // Could add a toast notification here
+    toast.success('Content copied to clipboard');
+    handleDropdownClose();
   };
 
   const dropdownOptions = [
     {
-      label: 'Export as Word',
-      onClick: () => {
-        console.log('Export as Word');
-        // Handle Word export
-      }
-    },
-    {
-      label: 'Export as Pdf',
-      onClick: () => {
-        console.log('Export as Pdf');
-        // Handle PDF export
-      }
-    },
-    {
+      icon: <TextIcon />,
       label: 'Copy',
       onClick: () => {
-        console.log('Copy');
-        // Handle copy
+        const selectedNarrativeContent = narratives.find(
+          n => `Narrative ${String.fromCharCode(65 + narratives.indexOf(n))}` === selectedNarrative
+        )?.content;
+        if (selectedNarrativeContent) {
+          handleCopy(selectedNarrativeContent);
+        }
       }
     },
     {
       label: 'Send to SMF Builder',
       onClick: () => {
-        router.push('/smf-builder');
+        // Get the selected narrative content and draftId
+        const selectedNarrativeContent = narratives.find(n => `Narrative ${String.fromCharCode(65 + narratives.indexOf(n))}` === selectedNarrative)?.content;
+        if (draftId && selectedNarrativeContent) {
+          // Store narrative content in sessionStorage and navigate with draftId
+          sessionStorage.setItem('narrativeForSmf', selectedNarrativeContent);
+          router.push(`/smf-builder?narrativeId=${draftId}`);
+        } else {
+          router.push('/smf-builder');
+        }
       }
     },
     {
@@ -148,30 +238,36 @@ export const GeneratedNarrativePage = () => {
                 </div>
               </div>
 
-        {/* Narrative Cards */}
-        <div className="space-y-8">
-          {!rejectedNarratives.includes('Narrative A') && (
-            <NarrativeCard
-              title="Narrative A"
-              content={narrativeA}
-              onApprove={() => handleApprove('Narrative A')}
-              onReject={() => handleReject('Narrative A')}
-              onCopy={() => handleCopy(narrativeA)}
-              showActions={!actedUponNarratives.includes('Narrative A')}
-            />
-          )}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-12">
+            <p className="text-text-gray font-dm-sans">Loading narratives...</p>
+          </div>
+        )}
 
-          {!rejectedNarratives.includes('Narrative B') && (
-            <NarrativeCard
-              title="Narrative B"
-              content={narrativeB}
-              onApprove={() => handleApprove('Narrative B')}
-              onReject={() => handleReject('Narrative B')}
-              onCopy={() => handleCopy(narrativeB)}
-              showActions={!actedUponNarratives.includes('Narrative B')}
-            />
-          )}
-        </div>
+        {/* Narrative Cards */}
+        {!isLoading && narratives.length > 0 && (
+          <div className="space-y-8">
+            {narratives.map((narrative, index) => {
+              const narrativeLabel = `Narrative ${String.fromCharCode(65 + index)}`;
+              const isRejected = rejectedNarratives.includes(narrativeLabel);
+              
+              if (isRejected) return null;
+
+              return (
+                <NarrativeCard
+                  key={narrative.id}
+                  title={narrativeLabel}
+                  content={narrative.content}
+                  onApprove={() => handleApprove(narrativeLabel)}
+                  onReject={() => handleReject(narrativeLabel)}
+                  onCopy={() => handleCopy(narrative.content)}
+                  showActions={!actedUponNarratives.includes(narrativeLabel)}
+                />
+              );
+            })}
+          </div>
+        )}
 
         {/* Footer Note */}
         <div className="text-left mt-12">
@@ -190,7 +286,7 @@ export const GeneratedNarrativePage = () => {
                 onClick={handleExport}
                 className="w-full bg-black text-white hover:bg-gray-800 rounded-xl py-4 font-medium font-dm-sans"
               >
-                Export
+                Export as PDF
               </Button>
             </div>
           </div>

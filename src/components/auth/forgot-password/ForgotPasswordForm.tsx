@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Input } from "../../ui/Input";
@@ -7,6 +8,8 @@ import { Button } from "../../ui/Button";
 import { UserIcon } from "../../ui/Icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authApi } from "../../../lib/api";
+import { useToastContext } from "@/components/providers/ToastProvider";
 
 interface ForgotPasswordFormValues {
   email: string;
@@ -23,11 +26,32 @@ export const ForgotPasswordForm = () => {
     email: "",
   };
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToastContext();
 
-  const handleSubmit = (values: ForgotPasswordFormValues) => {
-    console.log("Reset password attempt:", values);
-    // Handle password reset logic here
-    router.push("/reset-password");
+  const handleSubmit = async (values: ForgotPasswordFormValues) => {
+    setIsSubmitting(true);
+
+    try {
+      const response = await authApi.forgotPassword({
+        email: values.email,
+      });
+
+      if (response.success) {
+        toast.success("Password reset link sent successfully. Please check your email.");
+        // Optionally redirect after a delay
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
+      } else {
+        toast.error(response.message || "Failed to send reset link");
+      }
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -77,8 +101,9 @@ export const ForgotPasswordForm = () => {
                 variant="badge"
                 size="md"
                 className="w-full"
+                disabled={isSubmitting}
               >
-                Send Reset Link
+                {isSubmitting ? "Sending..." : "Send Reset Link"}
               </Button>
             </div>
 

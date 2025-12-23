@@ -6,6 +6,8 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { Button } from '../../ui/Button';
 import { OTPInput } from '../../ui/OTPInput';
+import { authApi } from '../../../lib/api';
+import { useToastContext } from '@/components/providers/ToastProvider';
 
 interface VerifyEmailFormData {
   otp: string;
@@ -22,10 +24,25 @@ export const VerifyEmailForm = () => {
   const router = useRouter();
   const [timeLeft, setTimeLeft] = useState(30);
   const [canResend, setCanResend] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [email, setEmail] = useState<string>('');
+  const toast = useToastContext();
 
   const initialValues: VerifyEmailFormData = {
     otp: '',
   };
+
+  // Get email from sessionStorage on mount
+  useEffect(() => {
+    const storedEmail = sessionStorage.getItem('signupEmail');
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      // If no email found, redirect back to signup
+      router.push('/signup');
+    }
+  }, [router]);
 
   // Countdown timer
   useEffect(() => {
@@ -38,22 +55,55 @@ export const VerifyEmailForm = () => {
   }, [timeLeft]);
 
   const handleSubmit = async (values: VerifyEmailFormData) => {
+    if (!email) return;
+
+    setIsSubmitting(true);
+
     try {
-      console.log('Verification code submitted:', values.otp);
-      // Handle verification logic here
-      // Redirect to role setup page
-      router.push('/role-setup');
+      const response = await authApi.verifyOTP({
+        email,
+        otp: values.otp,
+      });
+
+      if (response.success) {
+        toast.success('Email verified successfully! Redirecting to login...');
+        // Clear stored email
+        sessionStorage.removeItem('signupEmail');
+        // Redirect to login page
+        setTimeout(() => {
+          router.push('/login');
+        }, 1500);
+      } else {
+        toast.error(response.message || 'Invalid verification code. Please try again.');
+      }
     } catch (error) {
       console.error('Verification error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleResendCode = () => {
-    if (canResend) {
-      console.log('Resending verification code...');
-      setTimeLeft(30);
-      setCanResend(false);
-      // Handle resend logic here
+  const handleResendCode = async () => {
+    if (!canResend || !email) return;
+
+    setIsResending(true);
+
+    try {
+      const response = await authApi.resendOTP({ email });
+
+      if (response.success) {
+        toast.success('Verification code resent successfully!');
+        setTimeLeft(30);
+        setCanResend(false);
+      } else {
+        toast.error(response.message || 'Failed to resend code. Please try again.');
+      }
+    } catch (error) {
+      console.error('Resend error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -103,9 +153,10 @@ export const VerifyEmailForm = () => {
                 <button
                   type="button"
                   onClick={handleResendCode}
-                  className="text-light-blue font-medium hover:text-dark-blue transition-colors font-dm-sans"
+                  disabled={isResending}
+                  className="text-light-blue font-medium hover:text-dark-blue transition-colors font-dm-sans disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Resend Code
+                  {isResending ? 'Sending...' : 'Resend Code'}
                 </button>
               ) : (
                 <p className="text-sm text-text-gray font-dm-sans">
@@ -120,8 +171,9 @@ export const VerifyEmailForm = () => {
               variant="badge"
               size="lg"
               className="w-full"
+              disabled={isSubmitting}
             >
-              Verify
+              {isSubmitting ? 'Verifying...' : 'Verify'}
             </Button>
           </Form>
         )}

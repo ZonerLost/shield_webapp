@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useState, useMemo } from "react";
+import { forwardRef, useState, useMemo, useEffect } from "react";
 import {
   parsePhoneNumberFromString,
   AsYouType,
@@ -42,11 +42,49 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
       []
     );
 
-    const [selectedCountry, setSelectedCountry] = useState(countries[0]);
+    // Initialize selectedCountry by parsing the value if it exists
+    const getInitialCountry = () => {
+      if (value) {
+        const parsed = parsePhoneNumberFromString(value);
+        if (parsed?.country) {
+          const country = countries.find((c) => c.code === parsed.country);
+          if (country) return country;
+        }
+      }
+      return countries[0];
+    };
+
+    const [selectedCountry, setSelectedCountry] = useState(getInitialCountry);
+
+    // Update selectedCountry when value changes (e.g., when loading saved data)
+    useEffect(() => {
+      if (value) {
+        const parsed = parsePhoneNumberFromString(value);
+        if (parsed?.country) {
+          const country = countries.find((c) => c.code === parsed.country);
+          if (country && country.code !== selectedCountry.code) {
+            setSelectedCountry(country);
+          }
+        }
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
 
     // Extract phone number without country code
-    const phoneNumber =
-      value?.replace(selectedCountry.dialCode, "").trim() || "";
+    const getPhoneNumber = () => {
+      if (!value) return "";
+      
+      // Try to parse the phone number (auto-detect country from the number itself)
+      const parsed = parsePhoneNumberFromString(value);
+      if (parsed) {
+        return parsed.nationalNumber || "";
+      }
+      
+      // Fallback: remove the selected country dial code
+      return value.replace(selectedCountry.dialCode, "").trim();
+    };
+
+    const phoneNumber = getPhoneNumber();
 
     // Format input and notify parent
     const handlePhoneChange = (phoneValue: string) => {

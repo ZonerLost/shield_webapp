@@ -1,6 +1,5 @@
 'use client';
 
-import { Input } from '../../ui/Input';
 import { TextArea } from '../../ui/TextArea';
 import { Button } from '../../ui/Button';
 import { TagIcon, OutcomeIcon, TextIcon } from '../../ui/Icons';
@@ -38,7 +37,7 @@ export const Step3 = ({ onGenerate, values, errors, touched, handleChange, setFi
     <>
       <div className="space-y-6">
         <TextArea
-          label="Antecedents (FV Only) - Optional"
+          label="Antecedents (FV Only)"
           placeholder="Enter prior history/background information (Family Violence cases only)"
           icon={<TextIcon />}
           value={values.antecedents}
@@ -51,8 +50,7 @@ export const Step3 = ({ onGenerate, values, errors, touched, handleChange, setFi
           error={touched.antecedents && errors.antecedents ? errors.antecedents : undefined}
         />
 
-        <Input
-          type="text"
+        <TextArea
           label="Reason for Attendance"
           placeholder="Enter reason for attendance"
           icon={<OutcomeIcon />}

@@ -3,6 +3,7 @@ import { DM_Sans } from "next/font/google";
 import { Suspense } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { NProgressProvider } from "@/components/providers/NProgressProvider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 import { NotFoundProvider } from "@/contexts/NotFoundContext";
 import "./globals.css";
 
@@ -13,8 +14,12 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ShieldSystems - Securing Your Digital Future",
-  description: "ShieldSystems provides comprehensive security solutions for your digital infrastructure and data protection needs.",
+  title: "Shield Systems - Securing Your Digital Future",
+  description: "Shield Systems provides comprehensive security solutions for your digital infrastructure and data protection needs.",
+  icons: {
+    icon: '/fav-icon.png',
+    apple: '/app-icon.png',
+  },
 };
 
 export default function RootLayout({
@@ -30,9 +35,11 @@ export default function RootLayout({
         <NotFoundProvider>
           <Suspense fallback={null}>
             <NProgressProvider>
-              <AppLayout>
-                {children}
-              </AppLayout>
+              <ToastProvider>
+                <AppLayout>
+                  {children}
+                </AppLayout>
+              </ToastProvider>
             </NProgressProvider>
           </Suspense>
         </NotFoundProvider>

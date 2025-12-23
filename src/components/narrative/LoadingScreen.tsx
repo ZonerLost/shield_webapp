@@ -25,7 +25,7 @@ export const LoadingScreen = ({ onStop }: LoadingScreenProps) => {
           Generating...
         </h2>
         <p className="text-lg text-gray-600 font-dm-sans leading-relaxed">
-          Please wait ~8 seconds while Shield AI<br />
+          Please wait while Shield AI<br />
           expands your notes.
         </p>
       </div>

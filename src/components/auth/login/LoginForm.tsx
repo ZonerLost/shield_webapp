@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { Input } from '../../ui/Input';
@@ -8,6 +9,8 @@ import { UserIcon } from '../../ui/Icons';
 import { LockIcon } from '../../ui/Icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { authApi } from '../../../lib/api';
+import { useToastContext } from '@/components/providers/ToastProvider';
 
 interface LoginFormValues {
   email: string;
@@ -17,7 +20,11 @@ interface LoginFormValues {
 const validationSchema = Yup.object({
   email: Yup.string()
     .email('Invalid email address')
-    .required('Email is required'),
+    .required('Email is required')
+    .matches(
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      'Please enter a valid email address'
+    ),
   password: Yup.string()
     .min(6, 'Password must be at least 6 characters')
     .required('Password is required'),
@@ -29,10 +36,42 @@ export const LoginForm = () => {
     password: '',
   };
   const router = useRouter();
-  const handleSubmit = (values: LoginFormValues) => {
-    console.log('Login attempt:', values);
-    router.push('/');
-    // Handle login logic here
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToastContext();
+
+  const handleSubmit = async (values: LoginFormValues) => {
+    setIsSubmitting(true);
+
+    try {
+      const response = await authApi.login({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (response.success && response.data) {
+        const data = response.data as { token?: string; user?: unknown };
+        if (data.token) {
+          // Store JWT token in localStorage
+          localStorage.setItem('authToken', data.token);
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+          }
+          // Show success toast
+          toast.success('Logged in successfully!');
+          // Redirect to dashboard
+          router.push('/dashboard');
+        } else {
+          toast.error('Login failed. No token received.');
+        }
+      } else {
+        toast.error(response.message || 'Login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -103,8 +142,9 @@ export const LoginForm = () => {
               variant="badge"
               size="md"
               className="w-full"
+              disabled={isSubmitting}
             >
-              Log In
+              {isSubmitting ? 'Logging in...' : 'Log In'}
             </Button>
           </Form>
         )}

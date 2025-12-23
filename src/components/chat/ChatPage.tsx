@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import { FeatureCards } from "./FeatureCards";
 import { ChatInput } from "./ChatInput";
 import { SuggestedPrompts } from "./SuggestedPrompts";
 import { ChatMessages } from "./messages/ChatMessages";
+import { nexusApi } from "../../lib/api";
 
 // Add hidden scrollbar styles
 const scrollbarStyles = `
@@ -114,51 +114,94 @@ export const ChatPage = ({ }: ChatPageProps) => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const question = inputValue.trim();
     setInputValue("");
     setIsLoading(true);
     
     // Scroll to bottom immediately when user sends message
     scrollToBottom();
 
-    // Simulate AI response with real-time typing
-    const fullResponse = "This is a simulated response. In a real implementation, this would be an AI-generated answer based on legal knowledge and the document context.";
-    
-    // Show loading indicator for 2 seconds before starting typing
-    setTimeout(() => {
-      // Start typing effect
-      let currentIndex = 0;
-      setTypingMessage("");
+    try {
+      // Call Nexus API
+      const response = await nexusApi.query(question);
       
-      // Scroll to show typing indicator
-      scrollToBottom();
-      
-      // Clear any existing interval
-      if (typingIntervalRef.current) {
-        clearInterval(typingIntervalRef.current);
+      if (response.success && response.data) {
+        const answer = response.data.answer || "";
+        
+        // Format the answer to ensure proper paragraph structure
+        const formattedAnswer = formatNexusAnswer(answer);
+        
+        // Start typing effect after a brief delay
+        setTimeout(() => {
+          startTypewriterEffect(formattedAnswer);
+        }, 500); // 500ms delay before starting typing
+      } else {
+        // Handle error
+        const errorMessage = response.message || "Failed to get answer. Please try again.";
+        startTypewriterEffect(errorMessage);
       }
+    } catch (error) {
+      console.error('Error querying Nexus:', error);
+      const errorMessage = "An unexpected error occurred. Please try again.";
+      startTypewriterEffect(errorMessage);
+    }
+  };
 
-      typingIntervalRef.current = setInterval(() => {
-        if (currentIndex < fullResponse.length) {
-          setTypingMessage(fullResponse.slice(0, currentIndex + 1));
-          currentIndex++;
-        } else {
-          // Typing complete, add final message
-          if (typingIntervalRef.current) {
-            clearInterval(typingIntervalRef.current);
-            typingIntervalRef.current = null;
-          }
-          const assistantMessage: ChatMessage = {
-            id: (Date.now() + 1).toString(),
-            type: "assistant",
-            content: fullResponse,
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, assistantMessage]);
-          setTypingMessage("");
-          setIsLoading(false);
+  const formatNexusAnswer = (answer: string): string => {
+    // Ensure the answer has proper paragraph breaks
+    // The backend should return 3 paragraphs, but we'll format it nicely
+    let formatted = answer;
+    
+    // Add line breaks after "Citation:", "Verbatim:", "Summary:" if not present
+    formatted = formatted.replace(/(Citation:)/g, '\n\n$1');
+    formatted = formatted.replace(/(Verbatim:)/g, '\n\n$1');
+    formatted = formatted.replace(/(Summary:)/g, '\n\n$1');
+    
+    // Clean up multiple newlines
+    formatted = formatted.replace(/\n{3,}/g, '\n\n');
+    
+    return formatted.trim();
+  };
+
+  const startTypewriterEffect = (fullResponse: string) => {
+    // Clear any existing interval
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+    }
+
+    let currentIndex = 0;
+    setTypingMessage("");
+    
+    // Scroll to show typing indicator
+    scrollToBottom();
+
+    // Calculate typing speed - approximately 8 seconds for full response
+    const totalChars = fullResponse.length;
+    const targetDuration = 8000; // 8 seconds
+    const charDelay = Math.max(10, Math.min(50, targetDuration / totalChars)); // Between 10-50ms per char
+
+    typingIntervalRef.current = setInterval(() => {
+      if (currentIndex < fullResponse.length) {
+        setTypingMessage(fullResponse.slice(0, currentIndex + 1));
+        currentIndex++;
+        scrollToBottom();
+      } else {
+        // Typing complete, add final message
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
         }
-      }, 10); // 10ms delay between characters for faster typing
-    }, 2000); // 2 second delay before starting typing
+        const assistantMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          type: "assistant",
+          content: fullResponse,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        setTypingMessage("");
+        setIsLoading(false);
+      }
+    }, charDelay);
   };
 
   const handlePromptClick = (prompt: string) => {
@@ -187,16 +230,6 @@ export const ChatPage = ({ }: ChatPageProps) => {
       >
         {messages.length === 0 ? (
           <>
-            {/* Header Banner */}
-            <div className="flex justify-center">
-              <Image
-                src="/chat.png"
-                alt="Chat Header"
-                width={1000}
-                height={1000}
-                className="sm:w-1/2"
-              />
-            </div>
             {/* Feature Cards */}
             <FeatureCards />
             <SuggestedPrompts onPromptClick={handlePromptClick} />

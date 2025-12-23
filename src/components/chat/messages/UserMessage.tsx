@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar } from "../../ui/Avatar";
 import { FileAttachment } from "../attachments/FileAttachment";
 import { ImageAttachment } from "../attachments/ImageAttachment";
 
@@ -50,9 +49,6 @@ export const UserMessage = ({ message }: UserMessageProps) => {
           {message.attachments?.images?.map((image, index) => (
             <ImageAttachment key={index} image={image} />
           ))}
-        </div>
-        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-          <Avatar name="John Doe" size="md" />
         </div>
       </div>
     </div>

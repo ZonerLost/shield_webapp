@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { Input } from '../../ui/Input';
 import { Button } from '../../ui/Button';
 import { UserIcon, MailIcon, LockIcon } from '../../ui/Icons';
+import { authApi } from '../../../lib/api';
+import { useToastContext } from '@/components/providers/ToastProvider';
 
 interface SignupFormData {
   fullName: string;
@@ -20,7 +23,11 @@ const validationSchema = Yup.object({
     .min(2, 'Full name must be at least 2 characters'),
   email: Yup.string()
     .email('Please enter a valid email address')
-    .required('Email is required'),
+    .required('Email is required')
+    .matches(
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      'Please enter a valid email address'
+    ),
   password: Yup.string()
     .required('Password is required')
     .min(8, 'Password must be at least 8 characters')
@@ -34,6 +41,8 @@ const validationSchema = Yup.object({
 
 export const SignupForm = () => {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToastContext();
 
   const initialValues: SignupFormData = {
     fullName: '',
@@ -43,13 +52,28 @@ export const SignupForm = () => {
   };
 
   const handleSubmit = async (values: SignupFormData) => {
+    setIsSubmitting(true);
+
     try {
-      console.log('Signup form submitted:', values);
-      // Handle signup logic here
-      // For now, redirect to login page
-      router.push('/verify-email');
+      const response = await authApi.signup({
+        fullName: values.fullName,
+        email: values.email,
+        password: values.password,
+      });
+
+      if (response.success) {
+        toast.success('Account created successfully! Please verify your email.');
+        // Store email in sessionStorage for verify email page
+        sessionStorage.setItem('signupEmail', values.email);
+        router.push('/verify-email');
+      } else {
+        toast.error(response.message || 'Failed to create account. Please try again.');
+      }
     } catch (error) {
       console.error('Signup error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -155,8 +179,9 @@ export const SignupForm = () => {
               variant="badge"
               size="lg"
               className="w-full"
+              disabled={isSubmitting}
             >
-              Start Playing
+              {isSubmitting ? 'Creating Account...' : 'Create'}
             </Button>
 
           </Form>

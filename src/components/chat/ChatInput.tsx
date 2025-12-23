@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, SendIcon } from "@/components/ui/Icons";
-import { UploadMediaModal } from "@/components/ui/modals/UploadMediaModal";
+import { SendIcon } from "@/components/ui/Icons";
 import { FilePreview } from "./attachments/FilePreview";
 
 interface FilePreviewItem {
@@ -29,65 +28,7 @@ export const ChatInput = ({
   isLoading,
   onKeyPress,
 }: ChatInputProps) => {
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<FilePreviewItem[]>([]);
-
-  const handleUploadImage = () => {
-    // Create a file input for images
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.multiple = true;
-    input.onchange = (e) => {
-      const files = (e.target as HTMLInputElement).files;
-      if (files && files.length > 0) {
-        const newPreviewFiles: FilePreviewItem[] = Array.from(files).map(file => ({
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          url: URL.createObjectURL(file),
-          isImage: true,
-        }));
-        
-        setPreviewFiles(prev => [...prev, ...newPreviewFiles]);
-        
-        // Close modal only after files are selected
-        setIsUploadModalOpen(false);
-      }
-    };
-    
-    // Open file picker without closing modal
-    input.click();
-  };
-
-  const handleUploadFile = () => {
-    // Create a file input for documents
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.doc,.docx,.txt,.rtf';
-    input.multiple = true;
-    input.onchange = (e) => {
-      const files = (e.target as HTMLInputElement).files;
-      if (files && files.length > 0) {
-        const newPreviewFiles: FilePreviewItem[] = Array.from(files).map(file => ({
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          isImage: false,
-        }));
-        
-        setPreviewFiles(prev => [...prev, ...newPreviewFiles]);
-        
-        // Close modal only after files are selected
-        setIsUploadModalOpen(false);
-      }
-    };
-    
-    // Open file picker without closing modal
-    input.click();
-  };
 
   const handleRemoveFile = (id: string) => {
     setPreviewFiles(prev => prev.filter(file => file.id !== id));
@@ -105,18 +46,12 @@ export const ChatInput = ({
         <FilePreview files={previewFiles} onRemove={handleRemoveFile} />
         
         <div className="flex items-center space-x-3 bg-light-gray rounded-full p-3 border border-placeholder-gray/20">
-          <button 
-            onClick={() => setIsUploadModalOpen(true)}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-placeholder-gray/10 transition-colors"
-          >
-            <PlusIcon />
-          </button>
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={onKeyPress}
-          placeholder="Type your legal question..."
+          placeholder="Ask a question about WA legislation"
           className="flex-1 bg-transparent text-dark-blue placeholder-text-gray font-dm-sans focus:outline-none"
         />
         <button
@@ -130,12 +65,6 @@ export const ChatInput = ({
     </div>
 
     {/* Upload Media Modal */}
-    <UploadMediaModal
-      isOpen={isUploadModalOpen}
-      onClose={() => setIsUploadModalOpen(false)}
-      onUploadImage={handleUploadImage}
-      onUploadFile={handleUploadFile}
-    />
   </>
   );
 };

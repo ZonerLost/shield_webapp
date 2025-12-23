@@ -7,164 +7,225 @@ export const PrivacyPolicyPage = () => {
         {/* Header */}
         <div className="mb-8 lg:mb-12">
           <h1 className="text-2xl lg:text-4xl font-semibold text-blue-primary font-dm-sans">
-            Privacy Policy
+            Shield Systems Pty Ltd – Legal Documents
           </h1>
           <p className="text-lg lg:text-xl text-text-gray font-medium font-dm-sans mt-2">
-            Read app&apos;s data use terms.
+            Privacy Policy, Terms of Use & Data Processing Addendum
           </p>
         </div>
 
         {/* Privacy Policy Content */}
-        <div className="bg-light-gray rounded-xl border border-placeholder-gray/20 p-6 lg:p-8">
-          {/* Last Updated */}
-          <div className="mb-6 lg:mb-8">
-            <p className="text-sm lg:text-base text-text-gray font-dm-sans text-right">
-              Last updated on 5/12/2022
+        <div className="bg-light-gray rounded-xl border border-placeholder-gray/20 p-6 lg:p-8 space-y-10">
+          {/* Privacy Policy Section */}
+          <div>
+            <h2 className="text-xl lg:text-2xl font-semibold text-blue-primary font-dm-sans mb-4">
+              Privacy Policy
+            </h2>
+            <p className="text-sm lg:text-base text-text-gray font-dm-sans mb-6">
+              Last updated: 24 November 2025
             </p>
+            <p className="text-sm lg:text-base text-text-gray font-dm-sans mb-6 leading-relaxed">
+              Shield Systems Pty Ltd (&quot;Shield Systems&quot;, &quot;we&quot;, &quot;our&quot;, &quot;us&quot;) develops and operates secure, AI-powered software used by Australian law-enforcement agencies to prepare incident narratives, Statements of Material Facts, and related operational documents. We are committed to protecting personal information in accordance with the Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs).
+            </p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  1. Information we collect:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Law-enforcement data, user identifiers, metadata, and support information.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  2. How we use the information:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  To provide and improve the service, authenticate users, and comply with obligations.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  3. Storage and security:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Data is encrypted in transit (TLS 1.2+) and at rest (AES-256) within Microsoft Azure (Australia East).
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  4. Disclosure:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Only to authorised agency administrators, Azure, or regulators when required by law.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  5. Data retention:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Per agency policy; securely deleted on termination.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  6. Access and correction:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Available per APP 12–13; some records exempt under law-enforcement provisions.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  7. Contact:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  info@shieldsystems.com.au
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  8. Governing law:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Western Australia.
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="space-y-6 lg:space-y-8">
-            {/* Section 1 */}
-            <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                1. Acceptance of Terms
-              </h2>
-              <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                By downloading, accessing, or using the Shield Systems (&quot;App&quot;),
-                you agree to be bound by these Terms of Use (&quot;Terms&quot;). If you do
-                not agree, do not use the App.
-              </p>
-            </div>
 
-            {/* Section 2 */}
-            <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                2. Changes to Terms
-              </h2>
-              <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                We reserve the right to modify these Terms at any time. Updates
-                will be posted in the App, and your continued use of the App
-                signifies your acceptance of any changes.
-              </p>
-            </div>
-
-            {/* Section 3 */}
-            <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                3. Use of the App
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm lg:text-base font-semibold text-blue-primary font-dm-sans mb-2">
-                    • Eligibility:
-                  </h3>
-                  <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                    You must be at least 18 years old or have parental consent
-                    to use the App.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm lg:text-base font-semibold text-blue-primary font-dm-sans mb-2">
-                    • Account Security:
-                  </h3>
-                  <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                    You are responsible for maintaining the confidentiality of
-                    your account information.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm lg:text-base font-semibold text-blue-primary font-dm-sans mb-2">
-                    • Prohibited Activities:
-                  </h3>
-                  <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                    You agree not to use the App for illegal purposes, spam, or
-                    unauthorized access to systems or data.
-                  </p>
-                </div>
+          {/* Terms of Use Section */}
+          <div className="border-t border-placeholder-gray/20 pt-10">
+            <h2 className="text-xl lg:text-2xl font-semibold text-blue-primary font-dm-sans mb-4">
+              Terms of Use
+            </h2>
+            <p className="text-sm lg:text-base text-text-gray font-dm-sans mb-6">
+              Effective date: 24 November 2025
+            </p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  1. Acceptance:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Only authorised law-enforcement personnel may use the service.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  2. Licence:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Non-exclusive, non-transferable access during the subscription term.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  3. Data handling:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Shield Systems acts as a data processor; the agency is the data controller.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  4. Responsibilities:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Users must maintain credential security and use the service lawfully.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  5. Availability:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  99.5% uptime target; no liability for force majeure events.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  6. Confidentiality:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Both parties must protect sensitive information.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  7. Limitation of liability:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Capped at fees paid in the prior 12 months.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  8. Termination:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  On breach or contract expiry; data returned or securely deleted.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  9. Governing law:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Western Australia.
+                </p>
               </div>
             </div>
+          </div>
 
-            {/* Section 4 */}
-            <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                4. Financial Terms
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm lg:text-base font-semibold text-blue-primary font-dm-sans mb-2">
-                    • Payments and Fees:
-                  </h3>
-                  <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                    Any transactions facilitated through the App are subject to
-                    the payment terms provided at the time of transaction.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm lg:text-base font-semibold text-blue-primary font-dm-sans mb-2">
-                    • Refund Policy:
-                  </h3>
-                  <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                    Refunds will be handled in accordance with our refund policy
-                    outlined in the App.
-                  </p>
-                </div>
+          {/* Data Processing Addendum Section */}
+          <div className="border-t border-placeholder-gray/20 pt-10">
+            <h2 className="text-xl lg:text-2xl font-semibold text-blue-primary font-dm-sans mb-4">
+              Data Processing Addendum (DPA)
+            </h2>
+            <p className="text-sm lg:text-base text-text-gray font-dm-sans mb-6">
+              Effective Date: 24 November 2025
+            </p>
+            <div className="space-y-4 mb-6">
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  Parties:
+                </h3>
+                <ul className="list-disc list-inside text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed space-y-1">
+                  <li>Shield Systems Pty Ltd (&quot;Processor&quot;)</li>
+                  <li>Contracting law-enforcement agency (&quot;Controller&quot;)</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  Purpose:
+                </h3>
+                <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
+                  Defines data processing obligations under the Privacy Act 1988 (Cth).
+                </p>
+              </div>
+              <div>
+                <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                  Key Points:
+                </h3>
+                <ul className="list-disc list-inside text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed space-y-1">
+                  <li>Processor acts solely on Controller&apos;s instructions.</li>
+                  <li>Sub-processor: Microsoft Azure (Australia East).</li>
+                  <li>Security: TLS 1.2+, AES-256, RBAC, managed identities, audit logging.</li>
+                  <li>Breach notification within 48 hours.</li>
+                  <li>Data retention/deletion per Controller&apos;s instruction.</li>
+                  <li>Liability governed by the main Service Agreement.</li>
+                  <li>Governing law: Western Australia.</li>
+                </ul>
               </div>
             </div>
-
-            {/* Section 5 */}
             <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                5. Data Protection
-              </h2>
+              <h3 className="text-base lg:text-lg font-semibold text-blue-primary font-dm-sans mb-2">
+                Contact:
+              </h3>
               <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                We are committed to protecting your personal information. All
-                data collected is handled in accordance with applicable privacy
-                laws and our Privacy Policy.
-              </p>
-            </div>
-
-            {/* Section 6 */}
-            <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                6. Intellectual Property
-              </h2>
-              <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                All content, features, and functionality of the App are owned by
-                Shield Systems and are protected by copyright, trademark, and
-                other intellectual property laws.
-              </p>
-            </div>
-
-            {/* Section 7 */}
-            <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                7. Limitation of Liability
-              </h2>
-              <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                Shield Systems shall not be liable for any indirect, incidental,
-                special, or consequential damages arising from your use of the
-                App.
-              </p>
-            </div>
-
-            {/* Section 8 */}
-            <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                8. Termination
-              </h2>
-              <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                We may terminate or suspend your access to the App at any time,
-                with or without cause, and with or without notice.
-              </p>
-            </div>
-
-            {/* Section 9 */}
-            <div>
-              <h2 className="text-lg lg:text-xl font-semibold text-blue-primary font-dm-sans mb-3 lg:mb-4">
-                9. Contact Information
-              </h2>
-              <p className="text-sm lg:text-base text-text-gray font-dm-sans leading-relaxed">
-                If you have any questions about these Terms, please contact us
-                at legal@shieldsystems.com.
+                info@shieldsystems.com.au
               </p>
             </div>
           </div>

@@ -6,10 +6,12 @@ import { SettingsMenuItem } from "./SettingsMenuItem";
 import { SettingsSection } from "./SettingsSection";
 import { ConfirmLogoutModal } from "../ui/modals/ConfirmLogoutModal";
 import { DocumentsIcon, HelpCircleIcon, LogoutIcon, OutcomeIcon, PreferencesIcon, PrivacyPolicyIcon, SecurityIcon, UserIcon } from "../ui/Icons";
+import { useToastContext } from "@/components/providers/ToastProvider";
 
 export const SettingsMenu = () => {
   const router = useRouter();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const toast = useToastContext();
 
   const handleItemClick = (action: string) => {
     switch (action) {
@@ -32,7 +34,7 @@ export const SettingsMenu = () => {
         router.push('/settings/privacy');
         break;
       case 'Narrative':
-        router.push('/narrative-generator');
+        router.push('/settings/narrative');
         break;
       case 'Logout':
         setIsLogoutModalOpen(true);
@@ -43,10 +45,17 @@ export const SettingsMenu = () => {
   };
 
   const handleLogoutConfirm = () => {
-    // TODO: Implement actual logout logic (clear tokens, redirect, etc.)
-    console.log('User confirmed logout');
+    // Clear all authentication data from localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    
+    // Close modal
     setIsLogoutModalOpen(false);
-    // For now, redirect to login page
+    
+    // Show logout toast
+    toast.info('Logged out successfully');
+    
+    // Redirect to login page
     router.push('/login');
   };
 
@@ -112,7 +121,7 @@ export const SettingsMenu = () => {
       </SettingsSection>
 
       {/* Danger Zone Section */}
-      <SettingsSection title="Danger Zone">
+      <SettingsSection title="Session">
         <SettingsMenuItem
           icon={<LogoutIcon />}
           title="Logout"

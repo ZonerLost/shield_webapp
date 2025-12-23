@@ -22,13 +22,52 @@ export const NarrativeCard = ({
 }: NarrativeCardProps) => {
   const [isCopied, setIsCopied] = useState(false);
 
+  // Remove asterisks from headings for clean copy
+  const cleanContentForCopy = (text: string) => {
+    return text.replace(/\*\*\*(.+?)\*\*\*/g, '$1');
+  };
+
   const handleCopy = () => {
+    // Copy the cleaned content without asterisks
+    const cleanedContent = cleanContentForCopy(content);
+    navigator.clipboard.writeText(cleanedContent);
     onCopy();
     setIsCopied(true);
     setTimeout(() => {
       setIsCopied(false);
     }, 2000);
   };
+
+  // Format narrative content: Replace ***Heading*** with properly styled headings
+  const formatNarrativeContent = (text: string) => {
+    // Split by headings wrapped in triple asterisks
+    const parts = text.split(/(\*\*\*[^*]+\*\*\*)/g);
+    
+    return parts.map((part, index) => {
+      // Check if this part is a heading (wrapped in ***)
+      const headingMatch = part.match(/^\*\*\*(.+?)\*\*\*$/);
+      if (headingMatch) {
+        const headingText = headingMatch[1].trim();
+        return (
+          <div key={index} className="mt-4 first:mt-0">
+            <h4 className="text-base font-bold text-dark-blue font-dm-sans mb-2">
+              {headingText}
+            </h4>
+          </div>
+        );
+      }
+      // Regular text content
+      if (part.trim()) {
+        return (
+          <p key={index} className="text-sm font-medium text-text-gray font-dm-sans mb-3 whitespace-pre-wrap">
+            {part.trim()}
+          </p>
+        );
+      }
+      return null;
+    }).filter(Boolean);
+  };
+
   return (
     <div className="">
       {/* Card Header */}
@@ -59,9 +98,9 @@ export const NarrativeCard = ({
         <div>
         <TextIcon />
         </div>
-        <p className="text-sm font-medium text-text-gray font-dm-sans">
-          {content}
-        </p>
+        <div className="flex-1">
+          {formatNarrativeContent(content)}
+        </div>
         
          {/* Copy Icon */}
          <button

@@ -7,7 +7,7 @@ import { ContactIcon } from "../../ui/Icons";
 const faqData: FAQItem[] = [
   {
     question: "How are my drafts saved?",
-    answer: "All drafts are auto-saved every 2 seconds. If you close the app or lose connection, your work will be restored when you log back in."
+    answer: "All drafts are auto-saved. If you close the app or lose connection, your work will be restored when you log back in."
   },
   {
     question: "Can I edit the AI-generated narratives or SMFs?",
@@ -19,7 +19,7 @@ const faqData: FAQItem[] = [
   },
   {
     question: "Does the chatbot give legal advice?",
-    answer: "No, the chatbot provides information and assistance with document preparation but does not provide legal advice. Always consult with a qualified attorney for legal matters."
+    answer: "No, the chatbot provides information and assistance with document preparation but does not provide legal advice."
   }
 ];
 
@@ -59,7 +59,7 @@ export const HelpPage = () => {
               </div>
               <div>
                 <p className="text-md font-medium text-blue-primary font-dm-sans">
-                  Email us (it@shieldsystems.com)
+                  Email us (info@shieldsystems.com.au)
                 </p>
               </div>
             </div>

@@ -1,13 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { Avatar } from "../../ui/Avatar";
 import { Input } from "../../ui/Input";
 import { Button } from "../../ui/Button";
 import { Dropdown } from "../../ui/Dropdown";
 import { PhoneInput } from "../../ui/PhoneInput";
-import { UserIcon, GenderIcon, EditIcon, MailIcon } from "../../ui/Icons";
+import { UserIcon, GenderIcon, MailIcon } from "../../ui/Icons";
+import { authApi } from "../../../lib/api";
+import { useToastContext } from "@/components/providers/ToastProvider";
 
 interface PersonalInfoFormValues {
   fullName: string;
@@ -40,18 +43,127 @@ const genderOptions = [
 ];
 
 export const PersonalInfoPage = () => {
-  const initialValues: PersonalInfoFormValues = {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userId, setUserId] = useState<string>("");
+  const toast = useToastContext();
+  const [initialValues, setInitialValues] = useState<PersonalInfoFormValues>({
     fullName: "",
     email: "",
     phoneNumber: "",
     gender: "",
     dateOfBirth: "",
+  });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      // Get userId from localStorage first
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        router.push('/login');
+        return;
+      }
+
+      try {
+        const user = JSON.parse(userStr);
+        const userId = user.userId;
+        
+        if (!userId) {
+          router.push('/login');
+          return;
+        }
+
+        setUserId(userId);
+
+        // Fetch latest user data from backend
+        const response = await authApi.getUser(userId);
+
+        if (response.success && response.data && typeof response.data === 'object' && 'user' in response.data) {
+          const userData = (response.data as { user: { fullName?: string; email?: string; phoneNumber?: string; gender?: string; dateOfBirth?: string } }).user;
+          setInitialValues({
+            fullName: userData.fullName || "",
+            email: userData.email || "",
+            phoneNumber: userData.phoneNumber || "",
+            gender: userData.gender || "",
+            dateOfBirth: userData.dateOfBirth || "",
+          });
+        } else {
+          // Fallback to localStorage if API fails
+          setInitialValues({
+            fullName: user.fullName || "",
+            email: user.email || "",
+            phoneNumber: user.phoneNumber || "",
+            gender: user.gender || "",
+            dateOfBirth: user.dateOfBirth || "",
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Fallback to localStorage on error
+        const user = JSON.parse(userStr);
+        setUserId(user.userId);
+        setInitialValues({
+          fullName: user.fullName || "",
+          email: user.email || "",
+          phoneNumber: user.phoneNumber || "",
+          gender: user.gender || "",
+          dateOfBirth: user.dateOfBirth || "",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
+
+  const handleSubmit = async (values: PersonalInfoFormValues) => {
+    if (!userId) return;
+
+    setIsSaving(true);
+
+    try {
+      const response = await authApi.updateUser(userId, {
+        fullName: values.fullName,
+        phoneNumber: values.phoneNumber,
+        gender: values.gender,
+        dateOfBirth: values.dateOfBirth,
+      });
+
+      if (response.success && response.data && typeof response.data === 'object' && 'user' in response.data) {
+        // Update localStorage with new user data
+        const userData = (response.data as { user: { userId?: string; fullName?: string; email?: string; phoneNumber?: string; gender?: string; dateOfBirth?: string } }).user;
+        const updatedUser = {
+          userId: userData.userId,
+          fullName: userData.fullName,
+          email: userData.email,
+          phoneNumber: userData.phoneNumber,
+          gender: userData.gender,
+          dateOfBirth: userData.dateOfBirth,
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        toast.success('Profile updated successfully!');
+      } else {
+        toast.error(response.message || 'Failed to update personal information');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSubmit = (values: PersonalInfoFormValues) => {
-    console.log("Form submitted:", values);
-    // TODO: Implement API call to save personal info
-  };
+  if (isLoading) {
+    return (
+      <div className="py-8 px-6">
+        <div className="max-w-md mx-auto">
+          <div className="text-center">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-8 px-6">
@@ -64,19 +176,6 @@ export const PersonalInfoPage = () => {
           <p className="text-lg text-text-gray font-medium font-dm-sans">
             View your agency profile details.
           </p>
-        </div>
-
-        {/* Avatar Section */}
-        <div className="flex justify-center mb-8">
-          <div className="relative">
-            <Avatar 
-              name="Jane Doe"
-              size="3xl"
-            />
-            <button className="absolute bottom-0 right-0 w-8 h-8 bg-icons-bg text-white rounded-full flex items-center justify-center shadow-lg hover:bg-icons-bg/90 transition-colors">
-              <EditIcon />
-            </button>
-          </div>
         </div>
 
         {/* Form */}
@@ -105,21 +204,24 @@ export const PersonalInfoPage = () => {
                 error={touched.fullName && errors.fullName ? errors.fullName : undefined}
               />
 
-              {/* Email */}
-              <Input
-                type="email"
-                label="Email"
-                placeholder="Enter your email address"
-                icon={<MailIcon />}
-                value={values.email}
-                onChange={(value) => {
-                  handleChange({ target: { name: "email", value } });
-                  if (value === "") {
-                    setFieldTouched("email", false);
-                  }
-                }}
-                error={touched.email && errors.email ? errors.email : undefined}
-              />
+              {/* Email - Display Only */}
+              <div>
+                <label className="block text-md font-semibold text-blue-primary font-dm-sans mb-2">
+                  Email
+                </label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                    <MailIcon />
+                  </div>
+                  <input
+                    type="email"
+                    value={values.email}
+                    readOnly
+                    className="w-full pl-10 pr-4 py-3 border-2 border-placeholder-gray rounded-lg bg-placeholder-gray/10 text-text-gray font-dm-sans cursor-not-allowed"
+                  />
+                </div>
+                
+              </div>
 
               {/* Phone Number */}
               <div>
@@ -181,8 +283,9 @@ export const PersonalInfoPage = () => {
                   variant="badge"
                   size="lg"
                   className="w-full"
+                  disabled={isSaving}
                 >
-                  Save
+                  {isSaving ? 'Saving...' : 'Save'}
                 </Button>
               </div>
             </Form>

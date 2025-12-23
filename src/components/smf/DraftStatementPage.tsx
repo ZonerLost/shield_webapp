@@ -1,16 +1,53 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Logo, MenuIcon, MoreDotsIcon, TextIcon } from '../ui/Icons';
 import { Button } from '../ui/Button';
 import { ExportDropdown } from '../ui/ExportDropdown';
+import { smfApi } from '../../lib/api';
+import { useToastContext } from '@/components/providers/ToastProvider';
 
 export const DraftStatementPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [draftStatement, setDraftStatement] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [smfId, setSmfId] = useState<string | null>(null);
+  const toast = useToastContext();
 
-  const draftStatement = "On 15/09/2025 at 22:35, officers with call sign Delta 23 attended 45 Murray Street, Perth WA after a report of disturbance at a licensed premises. The suspect, MICHAEL BROWN (DOB 25/11/1990), was observed involved in a physical altercation with the victim, JOHN SMITH (DOB 12/03/1989). Security staff had separated both parties. CCTV footage was obtained and one broken glass seized. The victim sustained minor facial injuries treated by paramedics. The suspect was arrested for assault.";
+  useEffect(() => {
+    // Get SMF ID from URL or sessionStorage
+    const urlSmfId = searchParams.get('smfId');
+    const sessionSmfId = sessionStorage.getItem('currentSmfId');
+    const currentSmfId = urlSmfId || sessionSmfId;
+
+    if (currentSmfId) {
+      setSmfId(currentSmfId);
+      fetchSmf(currentSmfId);
+    } else {
+      toast.error('No SMF ID found');
+      setIsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const fetchSmf = async (id: string) => {
+    try {
+      const response = await smfApi.getSmf(id);
+      if (response.success && response.data) {
+        setDraftStatement(response.data.content || '');
+      } else {
+        toast.error(response.message || 'Failed to load SMF');
+      }
+    } catch (error) {
+      console.error('Error fetching SMF:', error);
+      toast.error('Failed to load SMF');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDropdownToggle = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -20,43 +57,106 @@ export const DraftStatementPage = () => {
     setIsDropdownOpen(false);
   };
 
-  const handleExport = () => {
-    console.log('Exporting draft statement...');
-    // Handle export logic
+  const handleSave = async (showFeedback = false) => {
+    if (!smfId || !draftStatement.trim()) return;
+    
+    try {
+      // Save the edited content back to the backend
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/smf/${smfId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: draftStatement.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        if (showFeedback) {
+          toast.success('SMF saved successfully!');
+        }
+      } else {
+        console.error('Failed to save SMF');
+        toast.error('Failed to save SMF');
+      }
+    } catch (error) {
+      console.error('Error saving SMF:', error);
+    }
   };
 
-  const handleWordExport = () => {
-    console.log('Exporting to Word...');
-    handleDropdownClose();
+  // Auto-save after user stops typing for 2 seconds
+  useEffect(() => {
+    if (!smfId || !draftStatement || isLoading) return;
+
+    const timeoutId = setTimeout(() => {
+      handleSave(false);
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftStatement, smfId]);
+
+  const handleExport = async () => {
+    if (!smfId || !draftStatement) return;
+    // Save before exporting
+    await handleSave();
+    
+    // Export as PDF only
+    await handlePDFExport();
   };
 
-  const handlePDFExport = () => {
-    console.log('Exporting to PDF...');
+  const handlePDFExport = async () => {
+    if (!smfId || !draftStatement) return;
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/smf/export`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          smfId,
+          content: draftStatement,
+          format: 'pdf',
+        }),
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `smf_${smfId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('SMF exported as PDF successfully!');
+      } else {
+        console.error('Export failed');
+        toast.error('Failed to export SMF');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export SMF');
+    }
     handleDropdownClose();
   };
 
   const handleCopy = () => {
-    console.log('Copying statement...');
+    if (!draftStatement) return;
+    navigator.clipboard.writeText(draftStatement);
     handleDropdownClose();
   };
 
   const handleRegenerate = () => {
-    console.log('Regenerating statement...');
+    // Navigate back to SMF builder with the same narrative
+    router.push('/smf-builder');
     handleDropdownClose();
   };
 
   // Dropdown options without SMF Builder
   const dropdownOptions = [
-    {
-      icon: <TextIcon />,
-      label: 'Export to Word',
-      onClick: handleWordExport,
-    },
-    {
-      icon: <TextIcon />,
-      label: 'Export to PDF',
-      onClick: handlePDFExport,
-    },
     {
       icon: <TextIcon />,
       label: 'Copy',
@@ -120,33 +220,47 @@ export const DraftStatementPage = () => {
           {/* Header Section */}
           <div className="text-left mb-8">
             <h1 className="text-2xl font-bold text-blue-primary font-dm-sans">
-              Draft Statement
+              Draft
             </h1>
-            <p className="text-lg font-medium text-text-gray font-dm-sans">
-              Review the AI Statement of Material Facts. Edit before exporting.
-            </p>
+           
           </div>
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="text-center py-12">
+              <p className="text-text-gray font-dm-sans">Loading statement...</p>
+            </div>
+          )}
+
           {/* Statement Section */}
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-dark-blue font-dm-sans">
-                Statement
-              </label>
-              <div className="bg-light-gray rounded-xl p-4 border border-placeholder-gray/20">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-icons-bg rounded-lg flex items-center justify-center">
+          {!isLoading && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-dark-blue font-dm-sans">
+                  Statement
+                </label>
+                <div className="relative">
+                  <div className="absolute left-4 top-4 text-placeholder-gray z-10">
                     <TextIcon />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-dark-blue font-dm-sans whitespace-pre-wrap">
-                      {draftStatement}
-                    </p>
+                  <textarea
+                    value={draftStatement}
+                    onChange={(e) => setDraftStatement(e.target.value)}
+                    placeholder="Statement of Material Facts will appear here..."
+                    className="w-full min-h-[400px] md:min-h-[500px] lg:min-h-[600px] px-4 py-4 pl-12 rounded-xl bg-light-gray border border-placeholder-gray/20 focus:outline-none focus:ring-2 focus:ring-blue-primary focus:border-transparent transition-all text-sm leading-relaxed font-medium font-dm-sans text-dark-blue placeholder-placeholder-gray resize-y"
+                    rows={20}
+                    style={{ lineHeight: '1.75' }}
+                  />
+                </div>
+                {/* Character count */}
+                <div className="flex items-center justify-end">
+                  <div className="text-xs text-text-gray font-dm-sans">
+                    {draftStatement.length} characters
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Note Section */}
           <div className="text-left mt-8">
